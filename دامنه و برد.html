@@ -1,0 +1,1262 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>آزمایشگاه بررسی دامنه و برد</title>
+    <style>
+        :root {
+            --bg-main: #060913;
+            --card-bg: rgba(15, 23, 42, 0.96);
+            --neon-cyan: #00f2fe;
+            --neon-pink: #ff007f;
+            --neon-purple: #a855f7;
+            --neon-yellow: #ffcc00;
+            --neon-green: #00ff88;
+            --border-glow: rgba(0, 242, 254, 0.35);
+        }
+
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+            font-family: 'Tahoma', 'Segoe UI', Arial, sans-serif; 
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            background: radial-gradient(circle at top, #111a2e 0%, #060913 100%);
+            min-height: 100vh;
+            padding: 12px 10px;
+            color: #ffffff;
+            direction: rtl;
+            display: flex;
+            justify-content: center;
+        }
+
+        .app-shell {
+            width: 100%;
+            max-width: 860px;
+            background: var(--card-bg);
+            border-radius: 24px;
+            border: 2px solid var(--border-glow);
+            box-shadow: 0 0 30px rgba(0, 242, 254, 0.18);
+            padding: 16px;
+            position: relative;
+        }
+
+        .app-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid rgba(255,255,255,0.08);
+            padding-bottom: 12px;
+            margin-bottom: 16px;
+        }
+        .app-title {
+            font-size: 18px;
+            font-weight: 900;
+            color: var(--neon-cyan);
+            text-shadow: 0 0 12px var(--neon-cyan);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-home-neon {
+            background: rgba(0, 242, 254, 0.15);
+            color: var(--neon-cyan);
+            border: 2px solid var(--neon-cyan);
+            border-radius: 12px;
+            padding: 7px 16px;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 0 12px rgba(0, 242, 254, 0.35);
+            display: none;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-home-neon:active { transform: scale(0.95); }
+
+        .app-view { display: none; }
+        .app-view.active { display: block; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin-top: 10px;
+        }
+
+        .neon-card-btn {
+            background: linear-gradient(145deg, #182238 0%, #0f172a 100%);
+            border-radius: 20px;
+            padding: 34px 16px;
+            text-align: center;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+            width: 100%;
+            user-select: none;
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+        .neon-card-btn:active { transform: scale(0.95); }
+
+        .card-1 { border: 2.5px solid var(--neon-cyan); box-shadow: 0 0 18px rgba(0, 242, 254, 0.3); }
+        .card-1 .c-title { color: var(--neon-cyan); text-shadow: 0 0 10px var(--neon-cyan); }
+        .card-2 { border: 2.5px solid var(--neon-green); box-shadow: 0 0 18px rgba(0, 255, 136, 0.3); }
+        .card-2 .c-title { color: var(--neon-green); text-shadow: 0 0 10px var(--neon-green); }
+        .card-3 { border: 2.5px solid var(--neon-yellow); box-shadow: 0 0 18px rgba(255, 204, 0, 0.3); }
+        .card-3 .c-title { color: var(--neon-yellow); text-shadow: 0 0 10px var(--neon-yellow); }
+        .card-4 { border: 2.5px solid var(--neon-pink); box-shadow: 0 0 18px rgba(255, 0, 127, 0.3); }
+        .card-4 .c-title { color: var(--neon-pink); text-shadow: 0 0 10px var(--neon-pink); }
+
+        .c-icon { font-size: 54px; filter: drop-shadow(0 0 10px rgba(255,255,255,0.4)); line-height: 1; pointer-events: none; }
+        .c-title { font-size: 18px; font-weight: 900; pointer-events: none; }
+
+        .svg-canvas-wrapper {
+            background: #ffffff;
+            border-radius: 16px;
+            border: 2px solid #334155;
+            box-shadow: 0 0 20px rgba(0, 242, 254, 0.2);
+            overflow: hidden;
+            margin: 12px 0;
+            position: relative;
+            touch-action: none;
+            width: 100%;
+        }
+        .svg-canvas-wrapper svg { display: block; width: 100%; height: auto; }
+        .touch-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; cursor: pointer; }
+
+        .controls-panel {
+            display: flex; justify-content: center; align-items: center; gap: 10px; margin: 10px 0; flex-wrap: wrap;
+        }
+        .neon-btn {
+            padding: 9px 18px; border: none; border-radius: 10px; font-size: 13.5px; font-weight: bold;
+            cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
+        }
+        .neon-btn:active { transform: scale(0.95); }
+        .nbtn-cyan { background: var(--neon-cyan); color: #040914; box-shadow: 0 0 14px rgba(0,242,254,0.5); }
+        .nbtn-pink { background: var(--neon-pink); color: white; box-shadow: 0 0 14px rgba(255,0,127,0.5); }
+        .nbtn-purple { background: var(--neon-purple); color: white; box-shadow: 0 0 14px rgba(168,85,247,0.5); }
+        .nbtn-yellow { background: var(--neon-yellow); color: #201a00; box-shadow: 0 0 14px rgba(255,204,0,0.5); }
+        .nbtn-gray { background: #334155; color: white; }
+
+        .result-text-box {
+            background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(0, 242, 254, 0.3);
+            border-radius: 12px; padding: 14px; margin-top: 10px; text-align: center;
+            font-size: 16px; font-weight: bold; color: var(--neon-cyan); min-height: 52px;
+            display: flex; align-items: center; justify-content: center;
+        }
+        
+        .math-text, .val-span { 
+            direction: ltr !important; 
+            display: inline-block; 
+            unicode-bidi: bidi-override;
+        }
+        .math-text { margin: 0 8px; color: var(--neon-yellow); font-size: 18px; }
+
+        .sandbox-info-panel {
+            background: rgba(0, 255, 136, 0.1); border: 1px solid var(--neon-green);
+            border-radius: 12px; padding: 10px 16px; margin-bottom: 10px;
+            display: flex; justify-content: space-around; align-items: center; font-size: 15px; font-weight: bold;
+            flex-wrap: wrap; gap: 8px;
+        }
+
+        .practice-input-grid {
+            direction: ltr;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .input-box {
+            direction: rtl;
+            background: rgba(15, 23, 42, 0.95);
+            border: 1px solid rgba(0, 242, 254, 0.3);
+            border-radius: 12px;
+            padding: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+        .box-label {
+            font-size: 12px;
+            font-weight: bold;
+            color: var(--neon-cyan);
+        }
+        .input-row {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            width: 100%;
+            justify-content: center;
+        }
+        .prac-input {
+            width: 60px;
+            text-align: center;
+            font-size: 16px;
+            font-weight: bold;
+            color: var(--neon-cyan);
+            background: rgba(255,255,255,0.1);
+            border: 1px solid var(--neon-cyan);
+            border-radius: 6px;
+            padding: 4px;
+            direction: ltr;
+            font-family: 'Tahoma', sans-serif;
+        }
+        .result-interval-box {
+            background: rgba(0, 255, 136, 0.1);
+            border: 1px solid var(--neon-green);
+            border-radius: 10px;
+            padding: 8px;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            color: var(--neon-green);
+            direction: ltr;
+            unicode-bidi: bidi-override;
+            margin-bottom: 12px;
+        }
+        .btn-plus-minus {
+            width: 28px; height: 28px; border-radius: 6px; border: 1px solid var(--neon-cyan);
+            background: rgba(0,242,254,0.15); color: var(--neon-cyan); font-size: 16px; font-weight: bold; cursor: pointer;
+        }
+        .btn-plus-minus:active { transform: scale(0.9); }
+        .tgl-endpoint {
+            padding: 6px 8px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 12px; border: none;
+            min-width: 58px; text-align: center; transition: all 0.2s;
+        }
+        .tgl-closed { background: #00ff88; color: #042914; box-shadow: 0 0 8px rgba(0,255,136,0.6); }
+        .tgl-open { background: #ff007f; color: white; box-shadow: 0 0 8px rgba(255,0,127,0.6); }
+
+        .quiz-prompt-card {
+            background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(0, 242, 254, 0.25);
+            border-radius: 12px; padding: 12px; font-size: 15.5px; font-weight: bold;
+            text-align: center; margin: 10px 0; box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            line-height: 2;
+        }
+        .quiz-option-btn {
+            width: 100%; background: #ffffff; color: #0f172a; border: 2px solid #cbd5e1;
+            border-radius: 12px; padding: 12px 16px; font-size: 16px; font-weight: bold; cursor: pointer;
+            margin-bottom: 10px; text-align: center; display: block; box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            direction: ltr; unicode-bidi: bidi-override; transition: all 0.2s;
+        }
+        .quiz-option-btn:active { transform: scale(0.98); }
+        .quiz-option-btn.opt-correct { background: #dcfce7 !important; border-color: #16a34a !important; color: #15803d !important; }
+        .quiz-option-btn.opt-wrong { background: #fee2e2 !important; border-color: #ef4444 !important; color: #b91c1c !important; }
+
+        .flower-container {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; overflow: hidden; z-index: 9999;
+        }
+        .flower {
+            position: absolute;
+            top: -50px;
+            font-size: 26px;
+            animation: fall linear forwards;
+        }
+        @keyframes fall {
+            0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(360deg); opacity: 0; }
+        }
+
+        .app-footer {
+            text-align: center; margin-top: 18px; padding-top: 12px;
+            border-top: 1px dashed rgba(255,255,255,0.2); color: #94a3b8; font-size: 14px; font-weight: bold;
+        }
+
+        @media (max-width: 600px) {
+            .dashboard-grid { grid-template-columns: 1fr; gap: 12px; }
+            .neon-card-btn { padding: 22px 14px; gap: 10px; }
+            .app-title { font-size: 16px; }
+            .practice-input-grid { gap: 6px; }
+            .prac-input { width: 45px; font-size: 14px; }
+            .btn-plus-minus { width: 24px; height: 24px; font-size: 14px; }
+            .tgl-endpoint { padding: 4px 6px; font-size: 11px; min-width: 50px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-shell">
+    <header class="app-header">
+        <h1 class="app-title" id="topHeaderTitle"><span>⚡</span> آزمایشگاه بررسی دامنه و برد</h1>
+        <button class="btn-home-neon" id="backHomeBtn" onclick="window.navTo('view-home')">🔙 صفحه اصلی</button>
+    </header>
+
+    <main id="view-home" class="app-view active">
+        <div class="dashboard-grid">
+            <div class="neon-card-btn card-1" onclick="window.navTo('view-learn')">
+                <span class="c-icon">🔮</span>
+                <span class="c-title">۱. آموزش متحرک و تصویری</span>
+            </div>
+            <div class="neon-card-btn card-2" onclick="window.navTo('view-sandbox')">
+                <span class="c-icon">🧪</span>
+                <span class="c-title">۲. آزمایشگاه چالشی</span>
+            </div>
+            <div class="neon-card-btn card-3" onclick="window.navTo('view-practice')">
+                <span class="c-icon">🎯</span>
+                <span class="c-title">۳. کارگاه تمرین هوشمند</span>
+            </div>
+            <div class="neon-card-btn card-4" onclick="window.navTo('view-quiz')">
+                <span class="c-icon">🏆</span>
+                <span class="c-title">۴. آزمون و چالش تستی</span>
+            </div>
+        </div>
+    </main>
+
+    <section id="view-learn" class="app-view">
+        <div class="controls-panel">
+            <button class="neon-btn nbtn-cyan" onclick="window.nextLearnExample()">🔄 مثال بعدی</button>
+            <button class="neon-btn nbtn-gray" onclick="window.resetLearnView()">↺ بازنشانی</button>
+        </div>
+
+        <div class="svg-canvas-wrapper" id="learnWrapper">
+            <svg id="learnSvg" viewBox="0 0 550 500"></svg>
+        </div>
+
+        <div class="controls-panel">
+            <button class="neon-btn nbtn-pink" onclick="window.triggerLearnAnimation('domain')">↔ پرتو افکنی دامنه (X)</button>
+            <button class="neon-btn nbtn-purple" onclick="window.triggerLearnAnimation('range')">↕ پرتو افکنی برد (Y)</button>
+        </div>
+
+        <div class="result-text-box" id="learnResultBox">
+            برای مشاهده دامنه یا برد، روی دکمه‌های پرتو افکنی کلیک کنید.
+        </div>
+    </section>
+
+    <section id="view-sandbox" class="app-view">
+        <div class="quiz-prompt-card" id="sandboxPrompt">در حال بارگذاری سوال...</div>
+        <div style="display:flex; justify-content:space-between; color:#94a3b8; font-size:13.5px; font-weight:bold; margin-bottom:8px;">
+            <span id="sandboxQuestionCount"></span>
+            <span id="sandboxScoreCount" style="color:var(--neon-green);">امتیاز: ۰</span>
+        </div>
+        <div style="font-size:12.5px; color:#10b981; margin-bottom:10px; line-height:1.8; background: rgba(16,185,129,0.08); padding: 10px; border-radius: 10px; border: 1px dashed rgba(16,185,129,0.4);">
+            💡 <b>راهنما:</b> سه نقطه درخشان را با کشیدن جابه‌جا کنید تا نمودار تابع دقیقاً در محدوده سبز رنگ (ناحیه هدف) قرار بگیرد. سپس دکمه «بررسی پاسخ» را بزنید.
+        </div>
+        <div class="sandbox-info-panel">
+            <span>دامنه فعلی: <b class="math-text" id="sandDomTxt" style="color:var(--neon-pink);"></b></span>
+            <span>برد فعلی: <b class="math-text" id="sandRanTxt" style="color:var(--neon-purple);"></b></span>
+        </div>
+        <div class="svg-canvas-wrapper" style="position:relative;">
+            <svg id="sandboxSvg" viewBox="0 0 550 500"></svg>
+            <div class="touch-layer" id="sandboxTouch"></div>
+        </div>
+        <div class="controls-panel">
+            <button class="neon-btn nbtn-cyan" onclick="window.checkSandbox()">✔ بررسی پاسخ</button>
+            <button class="neon-btn nbtn-gray" onclick="window.nextSandboxQuestion()">🔄 سوال بعدی</button>
+            <span id="sandboxFeedbackMsg" style="font-weight:bold; font-size:14px;"></span>
+        </div>
+    </section>
+
+    <section id="view-practice" class="app-view">
+        <div style="font-size:15px; font-weight:bold; color:var(--neon-yellow); margin-bottom:8px;" id="pracPromptText"></div>
+        <div style="font-size:12.5px; color:#10b981; margin-bottom:10px; text-align:right; line-height:1.8; background: rgba(16,185,129,0.08); padding: 10px; border-radius: 10px; border: 1px dashed rgba(16,185,129,0.4);">
+            💡 <b>راهنمای پاسخ‌دهی:</b><br>
+            🔹 <b>روش پویا:</b> نقاط رنگی روی محور را با انگشت یا ماوس بکشید تا بازه مورد نظر را روی نمودار مشخص کنید.<br>
+            🔹 <b>روش دستی:</b> مقادیر «ابتدا» و «انتها» را در کادرهای پایین وارد کنید.<br>
+            🔹 <b>توپر / توخالی:</b> برای تغییر وضعیت بسته/بازِ هر سرِ بازه، روی همان نقطه روی محور کلیک کنید یا دکمه‌های [ توپر ] / ( توخالی ) را بزنید.
+        </div>
+
+        <div class="practice-input-grid">
+            <div class="input-box">
+                <div class="box-label">ابتدا</div>
+                <div class="input-row">
+                    <button class="btn-plus-minus" onclick="window.stepPractice('min', -0.5)">−</button>
+                    <input type="text" id="inputPracMin" class="prac-input" value="۰" onchange="window.handlePracInput('min')">
+                    <button class="btn-plus-minus" onclick="window.stepPractice('min', +0.5)">+</button>
+                </div>
+                <button class="tgl-endpoint" id="btnTglMin" onclick="window.toggleEndpointState('min')"></button>
+            </div>
+            <div class="input-box">
+                <div class="box-label">انتها</div>
+                <div class="input-row">
+                    <button class="btn-plus-minus" onclick="window.stepPractice('max', -0.5)">−</button>
+                    <input type="text" id="inputPracMax" class="prac-input" value="۰" onchange="window.handlePracInput('max')">
+                    <button class="btn-plus-minus" onclick="window.stepPractice('max', +0.5)">+</button>
+                </div>
+                <button class="tgl-endpoint" id="btnTglMax" onclick="window.toggleEndpointState('max')"></button>
+            </div>
+        </div>
+        <div class="result-interval-box">
+            <span id="displayPracInterval"></span>
+        </div>
+
+        <div class="controls-panel">
+            <button class="neon-btn nbtn-cyan" onclick="window.checkPracticeResult()">✔ بررسی پاسخ</button>
+            <button class="neon-btn nbtn-gray" onclick="window.nextPracticeQuestion()">🔄 سوال بعدی</button>
+            <span id="practiceFeedbackMsg" style="font-weight:bold; font-size:14px; margin-right:6px;"></span>
+        </div>
+
+        <div class="svg-canvas-wrapper" style="position:relative;">
+            <svg id="practiceSvg" viewBox="0 0 550 500"></svg>
+            <div class="touch-layer" id="practiceTouch"></div>
+        </div>
+    </section>
+
+    <section id="view-quiz" class="app-view">
+        <div style="display:flex; justify-content:space-between; color:#94a3b8; font-size:13.5px; font-weight:bold; margin-bottom:8px;">
+            <span id="quizQuestionCount">سوال ۱ از ۱۰</span>
+            <span id="quizScoreCount" style="color:var(--neon-green);">امتیاز: ۰</span>
+        </div>
+
+        <div class="svg-canvas-wrapper">
+            <svg id="quizSvg" viewBox="0 0 550 500"></svg>
+        </div>
+
+        <div class="quiz-prompt-card" id="quizPrompt"></div>
+        <div id="quizOptionsContainer"></div>
+
+        <div style="text-align:center; margin-top:14px;">
+            <button class="neon-btn nbtn-gray" onclick="window.proceedNextQuiz()">سوال بعدی</button>
+        </div>
+    </section>
+
+    <footer class="app-footer">تهیه و تنظیم: زینب صفری</footer>
+</div>
+
+<script>
+/* =========================================================================
+   توابع پایه و امن
+   ========================================================================= */
+var pDigits = ['۰','۱','۲','۳','۴','۵','۶','۷','۸','۹'];
+function toPersianDigits(n) {
+    if (n === null || n === undefined) return '';
+    return n.toString().replace(/\d/g, function(d){ return pDigits[d]; }).replace('-', '−');
+}
+
+var SVG_BOX = { xMin: -6.5, xMax: 6.5, yMin: -6.5, yMax: 6.5, w: 550, h: 500, pad: 36 };
+
+function mapToScreen(x, y) {
+    var sx = (SVG_BOX.w - 2 * SVG_BOX.pad) / (SVG_BOX.xMax - SVG_BOX.xMin);
+    var sy = (SVG_BOX.h - 2 * SVG_BOX.pad) / (SVG_BOX.yMax - SVG_BOX.yMin);
+    return { x: SVG_BOX.pad + (x - SVG_BOX.xMin) * sx, y: SVG_BOX.h - SVG_BOX.pad - (y - SVG_BOX.yMin) * sy };
+}
+function mapFromScreen(px, py) {
+    var sx = (SVG_BOX.w - 2 * SVG_BOX.pad) / (SVG_BOX.xMax - SVG_BOX.xMin);
+    var sy = (SVG_BOX.h - 2 * SVG_BOX.pad) / (SVG_BOX.yMax - SVG_BOX.yMin);
+    return { x: (px - SVG_BOX.pad) / sx + SVG_BOX.xMin, y: (SVG_BOX.h - SVG_BOX.pad - py) / sy + SVG_BOX.yMin };
+}
+function getDist(x1, y1, x2, y2) { return Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2)); }
+
+function makeSvgCircle(cx, cy, isClosed, color) {
+    return '<circle cx="' + cx + '" cy="' + cy + '" r="6" fill="' + (isClosed ? color : 'white') + '" stroke="' + color + '" stroke-width="3"/>';
+}
+
+function buildBaseGraphContent(branches) {
+    var orig = mapToScreen(0, 0);
+    var s = '<defs><marker id="tealArrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#0d9488"/></marker></defs>';
+    
+    s += '<g stroke="#e2e8f0" stroke-width="0.8">';
+    for (var x = -6; x <= 6; x++) {
+        var px1 = mapToScreen(x, -6.5), px2 = mapToScreen(x, 6.5);
+        s += '<line x1="' + px1.x + '" y1="' + px1.y + '" x2="' + px2.x + '" y2="' + px2.y + '"/>';
+    }
+    for (var y = -6; y <= 6; y++) {
+        var py1 = mapToScreen(-6.5, y), py2 = mapToScreen(6.5, y);
+        s += '<line x1="' + py1.x + '" y1="' + py1.y + '" x2="' + py2.x + '" y2="' + py2.y + '"/>';
+    }
+    s += '</g>';
+    
+    var xStart = mapToScreen(-6.2, 0), xEnd = mapToScreen(6.2, 0);
+    var yStart = mapToScreen(0, -6.2), yEnd = mapToScreen(0, 6.2);
+    s += '<g stroke="#0d9488" stroke-width="2.2">';
+    s += '<line x1="' + xStart.x + '" y1="' + orig.y + '" x2="' + xEnd.x + '" y2="' + orig.y + '" marker-end="url(#tealArrow)"/>';
+    s += '<line x1="' + orig.x + '" y1="' + yStart.y + '" x2="' + orig.x + '" y2="' + yEnd.y + '" marker-end="url(#tealArrow)"/>';
+    s += '</g>';
+    
+    s += '<text x="' + (xEnd.x + 5) + '" y="' + (orig.y - 5) + '" font-size="14" font-weight="bold" fill="#0d9488">x</text>';
+    s += '<text x="' + (orig.x - 12) + '" y="' + (yEnd.y - 6) + '" font-size="14" font-weight="bold" fill="#0d9488">y</text>';
+    
+    s += '<g fill="#0d9488" font-size="10.5" font-weight="bold">';
+    for (var xi = -6; xi <= 6; xi++) {
+        if (xi === 0) continue;
+        var plx = mapToScreen(xi, 0);
+        s += '<line x1="' + plx.x + '" y1="' + (orig.y-3) + '" x2="' + plx.x + '" y2="' + (orig.y+3) + '" stroke="#0d9488" stroke-width="1.5"/>';
+        s += '<text x="' + plx.x + '" y="' + (orig.y + 14) + '" text-anchor="middle" style="direction: ltr; unicode-bidi: bidi-override;">' + toPersianDigits(xi) + '</text>';
+    }
+    for (var yi = -6; yi <= 6; yi++) {
+        if (yi === 0) continue;
+        var ply = mapToScreen(0, yi);
+        s += '<line x1="' + (orig.x-3) + '" y1="' + ply.y + '" x2="' + (orig.x+3) + '" stroke="#0d9488" stroke-width="1.5"/>';
+        s += '<text x="' + (orig.x - 8) + '" y="' + (ply.y + 4) + '" text-anchor="end" style="direction: ltr; unicode-bidi: bidi-override;">' + toPersianDigits(yi) + '</text>';
+    }
+    s += '</g>';
+    
+    if (branches && branches.length > 0) {
+        s += '<g id="branches-layer">';
+        for (var j = 0; j < branches.length; j++) {
+            var b = branches[j];
+            if (b.type === 'segment') {
+                var bp1 = mapToScreen(b.x1, b.y1), bp2 = mapToScreen(b.x2, b.y2);
+                s += '<line x1="' + bp1.x + '" y1="' + bp1.y + '" x2="' + bp2.x + '" y2="' + bp2.y + '" stroke="#1e3a8a" stroke-width="4" stroke-linecap="round"/>';
+                s += makeSvgCircle(bp1.x, bp1.y, b.c1, '#1e3a8a');
+                s += makeSvgCircle(bp2.x, bp2.y, b.c2, '#1e3a8a');
+            } else if (b.type === 'ray') {
+                var rp1 = mapToScreen(b.x1, b.y1), rp2 = mapToScreen(b.x2, b.y2);
+                s += '<line x1="' + rp1.x + '" y1="' + rp1.y + '" x2="' + rp2.x + '" y2="' + rp2.y + '" stroke="#1e3a8a" stroke-width="4" stroke-linecap="round"/>';
+                s += makeSvgCircle(rp1.x, rp1.y, b.c1, '#1e3a8a');
+            } else if (b.type === 'curve-inf') {
+                var cd = '';
+                for (var cx = b.xStart; cx >= b.xEnd; cx -= 0.05) {
+                    var cp = mapToScreen(cx, Math.max(b.yMinLimit, b.fn(cx)));
+                    cd += (cd === '' ? ('M ' + cp.x + ' ' + cp.y) : (' L ' + cp.x + ' ' + cp.y));
+                }
+                s += '<path d="' + cd + '" fill="none" stroke="#1e3a8a" stroke-width="4" stroke-linecap="round"/>';
+                var cpStart = mapToScreen(b.xStart, b.fn(b.xStart));
+                s += makeSvgCircle(cpStart.x, cpStart.y, b.cStart, '#1e3a8a');
+            } else if (b.type === 'parabola') {
+                var pd = '';
+                for (var pxk = b.rangeX[0]; pxk <= b.rangeX[1]; pxk += 0.05) {
+                    var pp = mapToScreen(pxk, b.fn(pxk));
+                    pd += (pd === '' ? ('M ' + pp.x + ' ' + pp.y) : (' L ' + pp.x + ' ' + pp.y));
+                }
+                s += '<path d="' + pd + '" fill="none" stroke="#1e3a8a" stroke-width="4" stroke-linecap="round"/>';
+                var pp1 = mapToScreen(b.rangeX[0], b.fn(b.rangeX[0]));
+                var pp2 = mapToScreen(b.rangeX[1], b.fn(b.rangeX[1]));
+                s += makeSvgCircle(pp1.x, pp1.y, b.cStart !== false, '#1e3a8a');
+                s += makeSvgCircle(pp2.x, pp2.y, b.cEnd !== false, '#1e3a8a');
+            } else if (b.type === 'vshape') {
+                var vp1 = mapToScreen(b.x1, b.y1), vpv = mapToScreen(b.xv, b.yv), vp2 = mapToScreen(b.x2, b.y2);
+                s += '<path d="M ' + vp1.x + ' ' + vp1.y + ' L ' + vpv.x + ' ' + vpv.y + ' L ' + vp2.x + ' ' + vp2.y + '" fill="none" stroke="#1e3a8a" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>';
+                s += makeSvgCircle(vp1.x, vp1.y, b.c1, '#1e3a8a');
+                s += makeSvgCircle(vp2.x, vp2.y, b.c2, '#1e3a8a');
+            }
+        }
+        s += '</g>';
+    }
+    return s;
+}
+
+window.navTo = function(targetId) {
+    var views = ['view-home', 'view-learn', 'view-sandbox', 'view-practice', 'view-quiz'];
+    for (var i = 0; i < views.length; i++) {
+        var el = document.getElementById(views[i]);
+        if (el) el.style.display = (views[i] === targetId) ? 'block' : 'none';
+        if (views[i] === targetId && el) el.className = 'app-view active';
+        else if (el) el.className = 'app-view';
+    }
+    var backBtn = document.getElementById('backHomeBtn');
+    if (targetId === 'view-home') {
+        if (backBtn) backBtn.style.display = 'none';
+    } else {
+        if (backBtn) backBtn.style.display = 'inline-flex';
+        if (targetId === 'view-learn') window.initLearnSection();
+        else if (targetId === 'view-sandbox') window.initSandboxSection();
+        else if (targetId === 'view-practice') window.initPracticeSection();
+        else if (targetId === 'view-quiz') window.initQuizSection();
+    }
+};
+
+/* =========================================================================
+   بخش ۱: آموزش متحرک
+   ========================================================================= */
+var learnExamplesList = [
+    { 
+        name: "تابع خطی نامتقارن", 
+        domStr: "(−۴, ۵]", 
+        ranStr: "(−۱, ۳.۵]", 
+        rangeMarks: [{ y: -1, closed: false }, { y: 3.5, closed: true }],
+        branches: [{ type: 'segment', x1: -4, y1: -1, c1: false, x2: 5, y2: 3.5, c2: true }] 
+    },
+    { 
+        name: "تابع سهمی با انتهاهای باز", 
+        domStr: "(−۳, ۴)", 
+        ranStr: "[−۲, ۶)", 
+        rangeMarks: [{ y: -2, closed: true }, { y: 6, closed: false }],
+        branches: [{ 
+            type: 'parabola', 
+            fn: function(x){ return 0.5*(x-1)*(x-1) - 2; }, 
+            rangeX: [-3, 4],
+            cStart: false,
+            cEnd: false
+        }] 
+    },
+    { 
+        name: "قدرمطلق", 
+        domStr: "[−۳, ۴]", 
+        ranStr: "[−۲, ۲]", 
+        rangeMarks: [{ y: -2, closed: true }, { y: 2, closed: true }],
+        branches: [{ type: 'vshape', x1: -3, y1: 2, xv: 1, yv: -2, x2: 4, y2: 1, c1: true, c2: true }] 
+    },
+    { 
+        name: "چندضابطه‌ای ترکیبی", 
+        domStr: "(−∞, −۱) U [−۱, ۲) U [۲, +∞) = R", 
+        ranStr: "(−∞, −۲) U {۱} U [۲, +∞)", 
+        branches: [
+            { type: 'ray', x1: -1, y1: -2, x2: -6, y2: -7, c1: false },
+            { type: 'segment', x1: -1, y1: 1, x2: 2, y2: 1, c1: true, c2: false },
+            { type: 'ray', x1: 2, y1: 2, x2: 6, y2: 6, c1: true }
+        ]
+    },
+    { 
+        name: "تابع پله‌ای", 
+        domStr: "[−۳, ۳)", 
+        ranStr: "{−۲, −۱, ۰, ۱, ۲}", 
+        branches: [
+            { type: 'segment', x1: -3, y1: -2, x2: -2, y2: -2, c1: true, c2: false },
+            { type: 'segment', x1: -2, y1: -1, x2: -1, y2: -1, c1: true, c2: false },
+            { type: 'segment', x1: -1, y1: 0, x2: 0, y2: 0, c1: true, c2: false },
+            { type: 'segment', x1: 0, y1: 1, x2: 1, y2: 1, c1: true, c2: false },
+            { type: 'segment', x1: 1, y1: 2, x2: 2, y2: 2, c1: true, c2: false },
+            { type: 'segment', x1: 2, y1: 3, x2: 3, y2: 3, c1: true, c2: false }
+        ]
+    }
+];
+
+var curLearnIdx = 0;
+var learnAnimId = null;
+
+window.initLearnSection = function() { curLearnIdx = 0; window.resetLearnView(); };
+window.nextLearnExample = function() { curLearnIdx = (curLearnIdx + 1) % learnExamplesList.length; window.resetLearnView(); };
+
+window.resetLearnView = function() {
+    cancelAnimationFrame(learnAnimId);
+    document.getElementById('learnSvg').innerHTML = buildBaseGraphContent(learnExamplesList[curLearnIdx].branches);
+    document.getElementById('learnResultBox').innerHTML = 'برای مشاهده دامنه یا برد، روی دکمه‌های پرتو افکنی کلیک کنید.';
+};
+
+window.triggerLearnAnimation = function(mode) {
+    cancelAnimationFrame(learnAnimId);
+    var t = 0;
+    var isDomain = (mode === 'domain');
+    var color = isDomain ? 'var(--neon-pink)' : 'var(--neon-purple)';
+    var resultBox = document.getElementById('learnResultBox');
+    resultBox.innerHTML = 'در حال تصویر کردن نقاط روی محور ' + (isDomain ? 'X' : 'Y') + '...';
+
+    function animate() {
+        t += 0.02;
+        if (t >= 1) {
+            t = 1;
+            drawLearnMorphStep(1, isDomain, color);
+            var resultStr = isDomain ? learnExamplesList[curLearnIdx].domStr : learnExamplesList[curLearnIdx].ranStr;
+            resultBox.innerHTML = (isDomain ? 'دامنه تابع:' : 'برد تابع:') + ' <span class="math-text">' + resultStr + '</span>';
+            return;
+        }
+        drawLearnMorphStep(t, isDomain, color);
+        learnAnimId = requestAnimationFrame(animate);
+    }
+    animate();
+};
+
+function drawLearnMorphStep(t, isDomain, color) {
+    var baseStr = buildBaseGraphContent(learnExamplesList[curLearnIdx].branches);
+    var morphStr = '';
+    var fData = learnExamplesList[curLearnIdx];
+
+    function morphPt(x, y) {
+        return { orig: mapToScreen(x, y), cur: mapToScreen(isDomain ? x : x*(1-t), isDomain ? y*(1-t) : y) };
+    }
+    
+    for (var i = 0; i < fData.branches.length; i++) {
+        var b = fData.branches[i];
+        var skipDefaultMarks = false;
+        
+        if (b.type === 'segment' || b.type === 'ray') {
+            var pt1 = morphPt(b.x1, b.y1), pt2 = morphPt(b.x2, b.y2);
+            morphStr += '<polygon points="' + pt1.orig.x + ',' + pt1.orig.y + ' ' + pt2.orig.x + ',' + pt2.orig.y + ' ' + pt2.cur.x + ',' + pt2.cur.y + ' ' + pt1.cur.x + ',' + pt1.cur.y + '" fill="rgba(255, 208, 0, 0.2)"/>';
+            morphStr += '<line x1="' + pt1.cur.x + '" y1="' + pt1.cur.y + '" x2="' + pt2.cur.x + '" y2="' + pt2.cur.y + '" stroke="' + color + '" stroke-width="5" stroke-linecap="round"/>';
+            
+            var isHoriz = Math.abs(b.y1 - b.y2) < 0.001;
+            var isVert = (b.x2 !== undefined) ? Math.abs(b.x1 - b.x2) < 0.001 : false;
+
+            if (!isDomain && isHoriz) {
+                var anyClosedY = b.c1 || (b.c2 !== undefined ? b.c2 : false);
+                morphStr += makeSvgCircle(pt1.cur.x, pt1.cur.y, anyClosedY, color);
+            } else if (isDomain && isVert) {
+                var anyClosedX = b.c1 || (b.c2 !== undefined ? b.c2 : false);
+                morphStr += makeSvgCircle(pt1.cur.x, pt1.cur.y, anyClosedX, color);
+            } else {
+                morphStr += makeSvgCircle(pt1.cur.x, pt1.cur.y, b.c1, color);
+                if (b.type === 'segment') morphStr += makeSvgCircle(pt2.cur.x, pt2.cur.y, b.c2, color);
+            }
+        } else if (b.type === 'curve-inf' || b.type === 'parabola' || b.type === 'vshape') {
+            var pts = [];
+            if (b.type === 'curve-inf') {
+                for (var cx = b.xStart; cx >= b.xEnd; cx -= 0.1) pts.push(morphPt(cx, Math.max(b.yMinLimit, b.fn(cx))));
+            } else if (b.type === 'parabola') {
+                for (var px = b.rangeX[0]; px <= b.rangeX[1]; px += 0.1) pts.push(morphPt(px, b.fn(px)));
+            } else if (b.type === 'vshape') {
+                pts.push(morphPt(b.x1, b.y1)); pts.push(morphPt(b.xv, b.yv)); pts.push(morphPt(b.x2, b.y2));
+            }
+            
+            for (var j = 0; j < pts.length - 1; j++) {
+                morphStr += '<polygon points="' + pts[j].orig.x + ',' + pts[j].orig.y + ' ' + pts[j+1].orig.x + ',' + pts[j+1].orig.y + ' ' + pts[j+1].cur.x + ',' + pts[j+1].cur.y + ' ' + pts[j].cur.x + ',' + pts[j].cur.y + '" fill="rgba(255, 208, 0, 0.2)"/>';
+            }
+            var d = '';
+            for (var k = 0; k < pts.length; k++) d += (k === 0 ? ('M ' + pts[k].cur.x + ' ' + pts[k].cur.y) : (' L ' + pts[k].cur.x + ' ' + pts[k].cur.y));
+            morphStr += '<path d="' + d + '" fill="none" stroke="' + color + '" stroke-width="5" stroke-linecap="round"/>';
+            
+            if (!isDomain && fData.rangeMarks) skipDefaultMarks = true;
+            
+            if (!skipDefaultMarks) {
+                var startClosed = (b.cStart !== undefined) ? b.cStart : (b.c1 !== undefined ? b.c1 : true);
+                var endClosed = (b.cEnd !== undefined) ? b.cEnd : (b.c2 !== undefined ? b.c2 : true);
+                if (b.type === 'curve-inf') {
+                    morphStr += makeSvgCircle(pts[0].cur.x, pts[0].cur.y, startClosed, color);
+                } else {
+                    morphStr += makeSvgCircle(pts[0].cur.x, pts[0].cur.y, startClosed, color);
+                    morphStr += makeSvgCircle(pts[pts.length-1].cur.x, pts[pts.length-1].cur.y, endClosed, color);
+                }
+            }
+        }
+    }
+    
+    if (t >= 0.99 && !isDomain && fData.rangeMarks) {
+        for (var rm = 0; rm < fData.rangeMarks.length; rm++) {
+            var mark = fData.rangeMarks[rm];
+            var mp = mapToScreen(0, mark.y);
+            morphStr += makeSvgCircle(mp.x, mp.y, mark.closed, color);
+        }
+    }
+    
+    document.getElementById('learnSvg').innerHTML = baseStr + '<g>' + morphStr + '</g>';
+}
+
+/* =========================================================================
+   موتور درگ مستقل
+   ========================================================================= */
+function setupTouchLayer(layerId, onStart, onMove, onEnd, onTap) {
+    var layer = document.getElementById(layerId);
+    if (!layer) return;
+    var isDragging = false;
+    var hasMoved = false;
+    var startTime;
+    var startClientX, startClientY;
+    var activeHandle = null;
+    var TAP_THRESHOLD_PX = 10;
+
+    function getPos(clientX, clientY) {
+        var rect = layer.getBoundingClientRect();
+        return mapFromScreen(
+            (clientX - rect.left) * (SVG_BOX.w / rect.width), 
+            (clientY - rect.top) * (SVG_BOX.h / rect.height)
+        );
+    }
+
+    function handleStart(clientX, clientY) {
+        var pos = getPos(clientX, clientY);
+        activeHandle = onStart(pos);
+        if (activeHandle !== null && activeHandle !== undefined) {
+            isDragging = true;
+            hasMoved = false;
+            startTime = Date.now();
+            startClientX = clientX;
+            startClientY = clientY;
+        } else {
+            isDragging = false;
+        }
+    }
+
+    function handleMove(clientX, clientY) {
+        if (!isDragging) return;
+        var dx = clientX - startClientX;
+        var dy = clientY - startClientY;
+        if (Math.sqrt(dx*dx + dy*dy) > TAP_THRESHOLD_PX) hasMoved = true;
+        onMove(getPos(clientX, clientY), activeHandle);
+    }
+
+    function handleEnd() {
+        if (isDragging) {
+            isDragging = false;
+            if (!hasMoved && Date.now() - startTime < 600 && onTap) onTap(activeHandle);
+        }
+        activeHandle = null;
+        onEnd();
+    }
+
+    layer.onmousedown = function(e) { handleStart(e.clientX, e.clientY); };
+    layer.onmousemove = function(e) { if (isDragging) handleMove(e.clientX, e.clientY); };
+    layer.onmouseup = handleEnd;
+    layer.onmouseleave = handleEnd;
+
+    layer.ontouchstart = function(e) { 
+        if (e.touches.length > 0) { e.preventDefault(); handleStart(e.touches[0].clientX, e.touches[0].clientY); } 
+    };
+    layer.ontouchmove = function(e) { 
+        if (isDragging && e.touches.length > 0) { e.preventDefault(); handleMove(e.touches[0].clientX, e.touches[0].clientY); } 
+    };
+    layer.ontouchend = function(e) { e.preventDefault(); handleEnd(); };
+}
+
+/* =========================================================================
+   بخش ۲: آزمایشگاه چالشی (با بازه‌های ریاضی)
+   ========================================================================= */
+var sandboxQuestions = [
+    { 
+        prompt: "تابع زیر را طوری بسازید که دامنه آن <span class='math-text'>[−۳ , ۳]</span> و برد آن <span class='math-text'>[−۲ , ۲]</span> باشد.", 
+        dMin: -3, dMax: 3, rMin: -2, rMax: 2 
+    },
+    { 
+        prompt: "تابع زیر را طوری بسازید که دامنه آن <span class='math-text'>[−۲ , ۴]</span> و برد آن <span class='math-text'>[۰ , ۴]</span> باشد.", 
+        dMin: -2, dMax: 4, rMin: 0, rMax: 4 
+    },
+    { 
+        prompt: "تابع زیر را طوری بسازید که دامنه آن <span class='math-text'>[−۴ , ۲]</span> و برد آن <span class='math-text'>[−۳ , ۱]</span> باشد.", 
+        dMin: -4, dMax: 2, rMin: -3, rMax: 1 
+    },
+    { 
+        prompt: "تابع زیر را طوری بسازید که دامنه آن <span class='math-text'>[۰ , ۴]</span> و برد آن <span class='math-text'>[−۲ , ۲]</span> باشد.", 
+        dMin: 0, dMax: 4, rMin: -2, rMax: 2 
+    },
+    { 
+        prompt: "تابع زیر را طوری بسازید که دامنه آن <span class='math-text'>[−۳ , ۳]</span> و برد آن <span class='math-text'>[۱ , ۵]</span> باشد.", 
+        dMin: -3, dMax: 3, rMin: 1, rMax: 5 
+    },
+    { 
+        prompt: "تابع زیر را طوری بسازید که دامنه آن <span class='math-text'>[−۵ , ۱]</span> و برد آن <span class='math-text'>[۰ , ۴]</span> باشد.", 
+        dMin: -5, dMax: 1, rMin: 0, rMax: 4 
+    },
+    { 
+        prompt: "تابع زیر را طوری بسازید که دامنه آن <span class='math-text'>[−۲ , ۲]</span> و برد آن <span class='math-text'>[−۴ , ۰]</span> باشد.", 
+        dMin: -2, dMax: 2, rMin: -4, rMax: 0 
+    },
+    { 
+        prompt: "تابع زیر را طوری بسازید که دامنه آن <span class='math-text'>[−۴ , ۴]</span> و برد آن <span class='math-text'>[−۱ , ۳]</span> باشد.", 
+        dMin: -4, dMax: 4, rMin: -1, rMax: 3 
+    },
+    { 
+        prompt: "تابع زیر را طوری بسازید که دامنه آن <span class='math-text'>[−۳ , ۱]</span> و برد آن <span class='math-text'>[۰ , ۶]</span> باشد.", 
+        dMin: -3, dMax: 1, rMin: 0, rMax: 6 
+    },
+    { 
+        prompt: "تابع زیر را طوری بسازید که دامنه آن <span class='math-text'>[−۱ , ۵]</span> و برد آن <span class='math-text'>[−۲ , ۴]</span> باشد.", 
+        dMin: -1, dMax: 5, rMin: -2, rMax: 4 
+    }
+];
+
+var sandboxQIdx = 0;
+var sandboxScore = 0;
+var sandboxAnswered = false;
+var currentSandboxTarget = sandboxQuestions[0];
+var sandControlPts = [ { x: -2, y: 0 }, { x: 0, y: 2 }, { x: 2, y: 0 } ];
+var activeSandDragIdx = null;
+
+window.initSandboxSection = function() {
+    sandboxScore = 0;
+    window.loadSandboxQuestion(0);
+};
+
+window.nextSandboxQuestion = function() {
+    sandboxQIdx = (sandboxQIdx + 1) % sandboxQuestions.length;
+    window.loadSandboxQuestion(sandboxQIdx);
+};
+
+window.loadSandboxQuestion = function(idx) {
+    sandboxQIdx = idx;
+    var q = sandboxQuestions[idx];
+    currentSandboxTarget = q;
+    sandboxAnswered = false;
+    // استفاده از innerHTML برای رندر شدن span های ریاضی
+    document.getElementById('sandboxPrompt').innerHTML = q.prompt;
+    document.getElementById('sandboxQuestionCount').textContent = 'سوال ' + toPersianDigits(idx + 1) + ' از ' + toPersianDigits(sandboxQuestions.length);
+    document.getElementById('sandboxScoreCount').textContent = 'امتیاز: ' + toPersianDigits(sandboxScore);
+    document.getElementById('sandboxFeedbackMsg').textContent = '';
+    
+    sandControlPts = [ { x: -2, y: 0 }, { x: 0, y: 2 }, { x: 2, y: 0 } ];
+    
+    window.renderSandboxLayer();
+    
+    setupTouchLayer('sandboxTouch',
+        function(pos) {
+            activeSandDragIdx = null;
+            for (var i = 0; i < sandControlPts.length; i++) {
+                if (getDist(sandControlPts[i].x, sandControlPts[i].y, pos.x, pos.y) < 1.4) activeSandDragIdx = i;
+            }
+            return activeSandDragIdx;
+        },
+        function(pos, idx) {
+            if (idx === null || idx === undefined) return;
+            var pt = sandControlPts[idx];
+            if (idx === 1) {
+                var dMin = Math.min(sandControlPts[0].x, sandControlPts[2].x);
+                var dMax = Math.max(sandControlPts[0].x, sandControlPts[2].x);
+                pt.x = Math.max(dMin + 0.5, Math.min(dMax - 0.5, Math.round(pos.x * 2) / 2));
+                pt.y = Math.max(-4.5, Math.min(4.5, Math.round(pos.y * 2) / 2));
+            } else {
+                pt.x = Math.max(-5.5, Math.min(5.5, Math.round(pos.x * 2) / 2));
+                pt.y = Math.max(-4.5, Math.min(4.5, Math.round(pos.y * 2) / 2));
+                var dMin2 = Math.min(sandControlPts[0].x, sandControlPts[2].x);
+                var dMax2 = Math.max(sandControlPts[0].x, sandControlPts[2].x);
+                if (sandControlPts[1].x < dMin2 + 0.5) sandControlPts[1].x = dMin2 + 0.5;
+                if (sandControlPts[1].x > dMax2 - 0.5) sandControlPts[1].x = dMax2 - 0.5;
+            }
+            window.renderSandboxLayer();
+        },
+        function() { activeSandDragIdx = null; }
+    );
+};
+
+function computeSandboxExtent() {
+    var p0 = sandControlPts[0], p1 = sandControlPts[1], p2 = sandControlPts[2];
+    if (Math.abs(p0.x - p1.x) < 0.001 || Math.abs(p0.x - p2.x) < 0.001 || Math.abs(p1.x - p2.x) < 0.001) return null;
+    
+    function calcQuad(x) {
+        var L0 = ((x - p1.x)*(x - p2.x)) / ((p0.x - p1.x)*(p0.x - p2.x));
+        var L1 = ((x - p0.x)*(x - p2.x)) / ((p1.x - p0.x)*(p1.x - p2.x));
+        var L2 = ((x - p0.x)*(x - p1.x)) / ((p2.x - p0.x)*(p2.x - p1.x));
+        return p0.y * L0 + p1.y * L1 + p2.y * L2;
+    }
+    
+    var minX = Math.min(p0.x, p2.x), maxX = Math.max(p0.x, p2.x);
+    var minY = Infinity, maxY = -Infinity;
+    for (var x = minX; x <= maxX; x += 0.05) {
+        var y = calcQuad(x);
+        if (y < minY) minY = y;
+        if (y > maxY) maxY = y;
+    }
+    return { dMin: minX, dMax: maxX, rMin: minY, rMax: maxY, calcQuad: calcQuad };
+}
+
+window.renderSandboxLayer = function() {
+    var ext = computeSandboxExtent();
+    if (!ext) return;
+    
+    var minX = ext.dMin, maxX = ext.dMax;
+    var minY = ext.rMin, maxY = ext.rMax;
+    var calcQuad = ext.calcQuad;
+    
+    var targetRect = '';
+    if (currentSandboxTarget) {
+        var t = currentSandboxTarget;
+        var tl = mapToScreen(t.dMin, t.rMax);
+        var br = mapToScreen(t.dMax, t.rMin);
+        var rx = Math.min(tl.x, br.x), ry = Math.min(tl.y, br.y);
+        var rw = Math.abs(br.x - tl.x), rh = Math.abs(br.y - tl.y);
+        targetRect = '<rect x="'+rx+'" y="'+ry+'" width="'+rw+'" height="'+rh+'" fill="rgba(0,255,136,0.13)" stroke="rgba(0,180,90,0.85)" stroke-width="2.5" stroke-dasharray="8,5"/>';
+    }
+    
+    var layer = targetRect;
+    layer += '<line x1="' + mapToScreen(minX, 0).x + '" y1="' + mapToScreen(minX, 0).y + '" x2="' + mapToScreen(maxX, 0).x + '" y2="' + mapToScreen(maxX, 0).y + '" stroke="var(--neon-pink)" stroke-width="8" stroke-linecap="round" opacity="0.85"/>';
+    layer += '<line x1="' + mapToScreen(0, minY).x + '" y1="' + mapToScreen(0, minY).y + '" x2="' + mapToScreen(0, maxY).x + '" y2="' + mapToScreen(0, maxY).y + '" stroke="var(--neon-purple)" stroke-width="8" stroke-linecap="round" opacity="0.85"/>';
+    
+    var d = '';
+    for (var x2 = minX; x2 <= maxX; x2 += 0.05) {
+        var y2 = calcQuad(x2);
+        var p = mapToScreen(x2, y2);
+        d += (d === '' ? ('M ' + p.x + ' ' + p.y) : (' L ' + p.x + ' ' + p.y));
+    }
+    layer += '<path d="' + d + '" fill="none" stroke="#3b82f6" stroke-width="4" stroke-linecap="round"/>';
+    
+    for (var i = 0; i < sandControlPts.length; i++) {
+        var pos = mapToScreen(sandControlPts[i].x, sandControlPts[i].y);
+        var ringColor = (i === 0) ? '#ef4444' : (i === 1) ? '#00f2fe' : '#10b981';
+        layer += '<circle cx="' + pos.x + '" cy="' + pos.y + '" r="14" fill="' + ringColor + '" stroke="' + ringColor + '" stroke-width="3" opacity="0.9"/>';
+        layer += '<circle cx="' + pos.x + '" cy="' + pos.y + '" r="4" fill="#0a0e17"/>';
+    }
+    
+    document.getElementById('sandboxSvg').innerHTML = buildBaseGraphContent([]) + layer;
+    document.getElementById('sandDomTxt').textContent = '[' + toPersianDigits(minX.toFixed(1)) + ' , ' + toPersianDigits(maxX.toFixed(1)) + ']';
+    document.getElementById('sandRanTxt').textContent = '[' + toPersianDigits(minY.toFixed(1)) + ' , ' + toPersianDigits(maxY.toFixed(1)) + ']';
+};
+
+window.checkSandbox = function() {
+    if (sandboxAnswered) return;
+    var ext = computeSandboxExtent();
+    if (!ext) return;
+    var t = currentSandboxTarget;
+    var fb = document.getElementById('sandboxFeedbackMsg');
+    
+    var tol = 0.6;
+    var dOk = Math.abs(ext.dMin - t.dMin) < tol && Math.abs(ext.dMax - t.dMax) < tol;
+    var rOk = Math.abs(ext.rMin - t.rMin) < tol && Math.abs(ext.rMax - t.rMax) < tol;
+    
+    if (dOk && rOk) {
+        sandboxAnswered = true;
+        sandboxScore += 10;
+        document.getElementById('sandboxScoreCount').textContent = 'امتیاز: ' + toPersianDigits(sandboxScore);
+        fb.style.color = 'var(--neon-green)';
+        fb.textContent = '🎉 عالی! کاملاً درست است.';
+        showCelebration();
+    } else if (dOk) {
+        fb.style.color = 'var(--neon-yellow)';
+        fb.textContent = '⚠️ دامنه درست است، اما برد مطابق هدف نیست.';
+    } else if (rOk) {
+        fb.style.color = 'var(--neon-yellow)';
+        fb.textContent = '⚠️ برد درست است، اما دامنه مطابق هدف نیست.';
+    } else {
+        fb.style.color = 'var(--neon-pink)';
+        fb.textContent = '❌ نه دامنه و نه برد مطابق هدف نیست. دوباره تلاش کنید.';
+    }
+};
+
+/* =========================================================================
+   بخش ۳: تمرین هوشمند
+   ========================================================================= */
+var practiceExercises = [
+    { prompt: "دامنه تابع خطی زیر را مشخص کنید:", ask: 'domain', branches: [{ type: 'segment', x1: -3, y1: 2, c1: false, x2: 4, y2: -1, c2: true }], correctMin: -3, correctMax: 4, openMin: true, openMax: false },
+    { prompt: "برد تابع خطی زیر را روی محور Y مشخص کنید:", ask: 'range', branches: [{ type: 'segment', x1: -4, y1: -1, c1: true, x2: 2, y2: 4, c2: false }], correctMin: -1, correctMax: 4, openMin: false, openMax: true },
+    { prompt: "برد سهمی زیر را مشخص کنید (دهانه رو به بالا):", ask: 'range', branches: [{ type: 'parabola', fn: function(x){ return 0.5*(x-1)*(x-1) - 2; }, rangeX: [-2, 4] }], correctMin: -2, correctMax: 2.5, openMin: false, openMax: false },
+    { prompt: "دامنه تابع سهمی زیر را روی محور X مشخص کنید:", ask: 'domain', branches: [{ type: 'parabola', fn: function(x){ return -(x+2)*(x+2) + 4; }, rangeX: [-4, 1] }], correctMin: -4, correctMax: 1, openMin: false, openMax: false },
+    { prompt: "برد تابع قدرمطلق (V شکل) زیر را مشخص کنید:", ask: 'range', branches: [{ type: 'vshape', x1: -1, y1: 2, xv: 2, yv: -1, x2: 5, y2: 2, c1: true, c2: true }], correctMin: -1, correctMax: 2, openMin: false, openMax: false },
+    { prompt: "دامنه یک پاره‌خط ساده را روی محور افقی نشان دهید:", ask: 'domain', branches: [{ type: 'segment', x1: -5, y1: -3, c1: false, x2: 1, y2: 3, c2: false }], correctMin: -5, correctMax: 1, openMin: true, openMax: true }
+];
+var curPracIndex = 0;
+var userRangeState = { min: -1, max: 2, openMin: false, openMax: false };
+
+window.initPracticeSection = function() { window.loadPracQuestion(0); };
+window.nextPracticeQuestion = function() { curPracIndex = (curPracIndex + 1) % practiceExercises.length; window.loadPracQuestion(curPracIndex); };
+
+window.loadPracQuestion = function(idx) {
+    curPracIndex = idx;
+    var q = practiceExercises[idx];
+    document.getElementById('pracPromptText').textContent = q.prompt;
+    document.getElementById('practiceFeedbackMsg').textContent = '';
+    userRangeState = { min: -2, max: 2, openMin: false, openMax: false };
+    window.updatePracControlsUI();
+    window.renderPracticeScene();
+
+    setupTouchLayer('practiceTouch',
+        function(pos) {
+            var v = q.ask === 'domain' ? pos.x : pos.y;
+            var handle = null;
+            if (Math.abs(v - userRangeState.min) < 2.2) handle = 'min';
+            else if (Math.abs(v - userRangeState.max) < 2.2) handle = 'max';
+            return handle;
+        },
+        function(pos, activePracHandle) {
+            if (!activePracHandle) return;
+            var snap = Math.round((q.ask === 'domain' ? pos.x : pos.y) * 2) / 2;
+            if (activePracHandle === 'min' && snap < userRangeState.max) userRangeState.min = snap;
+            if (activePracHandle === 'max' && snap > userRangeState.min) userRangeState.max = snap;
+            window.updatePracControlsUI();
+            window.renderPracticeScene();
+        },
+        function() { },
+        function(activePracHandle) {
+            if (activePracHandle === 'min') window.toggleEndpointState('min');
+            else if (activePracHandle === 'max') window.toggleEndpointState('max');
+        }
+    );
+};
+
+window.stepPractice = function(which, delta) {
+    if (which === 'min' && userRangeState.min + delta < userRangeState.max) userRangeState.min += delta;
+    if (which === 'max' && userRangeState.max + delta > userRangeState.min) userRangeState.max += delta;
+    window.updatePracControlsUI(); window.renderPracticeScene();
+};
+
+window.toggleEndpointState = function(which) {
+    if (which === 'min') userRangeState.openMin = !userRangeState.openMin;
+    if (which === 'max') userRangeState.openMax = !userRangeState.openMax;
+    window.updatePracControlsUI(); window.renderPracticeScene();
+};
+
+window.handlePracInput = function(which) {
+    var inputId = which === 'min' ? 'inputPracMin' : 'inputPracMax';
+    var valStr = document.getElementById(inputId).value;
+    var engStr = valStr.replace(/[۰-۹]/g, function(d) { return '۰۱۲۳۴۵۶۷۸۹'.indexOf(d); }).replace(/−/g, '-');
+    var val = parseFloat(engStr);
+    if (isNaN(val)) {
+        document.getElementById(inputId).value = toPersianDigits(which === 'min' ? userRangeState.min : userRangeState.max);
+        return;
+    }
+    if (which === 'min') {
+        if (val < userRangeState.max) userRangeState.min = val;
+        else document.getElementById(inputId).value = toPersianDigits(userRangeState.min);
+    } else {
+        if (val > userRangeState.min) userRangeState.max = val;
+        else document.getElementById(inputId).value = toPersianDigits(userRangeState.max);
+    }
+    window.updatePracControlsUI();
+    window.renderPracticeScene();
+};
+
+window.updatePracControlsUI = function() {
+    document.getElementById('inputPracMin').value = toPersianDigits(userRangeState.min);
+    document.getElementById('inputPracMax').value = toPersianDigits(userRangeState.max);
+    
+    var b1 = document.getElementById('btnTglMin');
+    b1.textContent = userRangeState.openMin ? '( توخالی )' : '[ توپر ]';
+    b1.className = 'tgl-endpoint ' + (userRangeState.openMin ? 'tgl-open' : 'tgl-closed');
+    
+    var b2 = document.getElementById('btnTglMax');
+    b2.textContent = userRangeState.openMax ? '( توخالی )' : '[ توپر ]';
+    b2.className = 'tgl-endpoint ' + (userRangeState.openMax ? 'tgl-open' : 'tgl-closed');
+    
+    var formula = (userRangeState.openMin ? '(' : '[') + toPersianDigits(userRangeState.min) + ' , ' + toPersianDigits(userRangeState.max) + (userRangeState.openMax ? ')' : ']');
+    document.getElementById('displayPracInterval').textContent = formula;
+};
+
+window.renderPracticeScene = function() {
+    var q = practiceExercises[curPracIndex];
+    var isDom = q.ask === 'domain';
+    var sp1 = mapToScreen(isDom ? userRangeState.min : 0, isDom ? 0 : userRangeState.min);
+    var sp2 = mapToScreen(isDom ? userRangeState.max : 0, isDom ? 0 : userRangeState.max);
+    
+    var userLayer = '<line x1="' + sp1.x + '" y1="' + sp1.y + '" x2="' + sp2.x + '" y2="' + sp2.y + '" stroke="#ffd000" stroke-width="8" opacity="0.85"/>';
+    userLayer += '<circle cx="' + sp1.x + '" cy="' + sp1.y + '" r="12" fill="' + (!userRangeState.openMin ? '#ef4444' : 'white') + '" stroke="#ef4444" stroke-width="4"/>';
+    userLayer += '<circle cx="' + sp2.x + '" cy="' + sp2.y + '" r="12" fill="' + (!userRangeState.openMax ? '#10b981' : 'white') + '" stroke="#10b981" stroke-width="4"/>';
+
+    document.getElementById('practiceSvg').innerHTML = buildBaseGraphContent(q.branches) + userLayer;
+};
+
+window.checkPracticeResult = function() {
+    var q = practiceExercises[curPracIndex];
+    var fb = document.getElementById('practiceFeedbackMsg');
+    var valOk = (Math.abs(userRangeState.min - q.correctMin) < 0.25) && (Math.abs(userRangeState.max - q.correctMax) < 0.25);
+    var openOk = (userRangeState.openMin === q.openMin) && (userRangeState.openMax === q.openMax);
+
+    if (valOk && openOk) {
+        fb.style.color = 'var(--neon-green)'; fb.textContent = '🎉 کاملاً صحیح است! آفرین.';
+        showCelebration();
+    } else if (valOk && !openOk) {
+        fb.style.color = 'var(--neon-yellow)'; fb.textContent = '⚠️ مقادیر بازه درسته، اما توپر/توخالی اشتباهه!';
+    } else {
+        fb.style.color = 'var(--neon-pink)'; fb.textContent = '❌ بازه انتخابی با سایه روی محور تطابق ندارد!';
+    }
+};
+
+function showCelebration() {
+    var container = document.createElement('div');
+    container.className = 'flower-container';
+    document.body.appendChild(container);
+    var flowers = ['🌸', '🌹', '🌺', '🌻', '🌼', '🌷', '💐', '🌾'];
+    for (var i = 0; i < 35; i++) {
+        var flower = document.createElement('div');
+        flower.className = 'flower';
+        flower.textContent = flowers[Math.floor(Math.random() * flowers.length)];
+        flower.style.left = Math.random() * 100 + '%';
+        flower.style.animationDuration = (Math.random() * 2 + 2) + 's';
+        flower.style.animationDelay = (Math.random() * 1.5) + 's';
+        container.appendChild(flower);
+    }
+    setTimeout(function() { container.remove(); }, 5000);
+}
+
+/* =========================================================================
+   بخش ۴: آزمون تستی
+   ========================================================================= */
+var quizQuestionsPool = [
+    { 
+        prompt: "با توجه به نمودار زیر، بردِ تابع کدام است؟", 
+        branches: [ 
+            { type: 'curve-inf', fn: function(x){ return -2 - 1.2*(x+1)*(x+1); }, xStart: -1, xEnd: -3.2, yMinLimit: -6, cStart: true }, 
+            { type: 'segment', x1: 0, y1: 0, x2: 5, y2: 6, c1: true, c2: false } 
+        ], 
+        options: ["[۰ , ۶) U [۰ , −۲)", "[۲ , ∞) U {۱} U (−∞ , −۲)", "[۰ , ۶) U (۰ , −۱]", "[۰ , ۶) U (−∞ , −۲]"], 
+        correct: 3 
+    },
+    { 
+        prompt: "دامنه تابع سهمی زیر کدام است؟", 
+        branches: [ { type: 'parabola', fn: function(x){ return 0.5*(x-2)*(x-2) - 1; }, rangeX: [-1, 4] } ], 
+        options: ["[−۱ , ۴]", "(−∞ , ∞)", "[−۱ , ∞)", "R"], 
+        correct: 0 
+    },
+    { 
+        prompt: "برد تابع قدرمطلق زیر کدام است؟", 
+        branches: [ { type: 'vshape', x1: -2, y1: 3, xv: 1, yv: -1, x2: 4, y2: 3, c1: true, c2: true } ], 
+        options: ["[−۱ , ۳]", "(−۱ , ۳)", "[−۱ , ∞)", "R"], 
+        correct: 0 
+    },
+    { 
+        prompt: "برد تابع پله‌ای زیر کدام مجموعه است؟", 
+        branches: [ 
+            { type: 'segment', x1: -3, y1: -1, x2: -2, y2: -1, c1: true, c2: false }, 
+            { type: 'segment', x1: -2, y1: 0, x2: -1, y2: 0, c1: true, c2: false }, 
+            { type: 'segment', x1: -1, y1: 1, x2: 0, y2: 1, c1: true, c2: false } 
+        ], 
+        options: ["{−۱ , ۰ , ۱}", "[−۳ , ۰]", "[−۱ , ۱]", "R"], 
+        correct: 0 
+    },
+    { 
+        prompt: "برد تابع چندضابطه‌ای زیر کدام است؟", 
+        branches: [ 
+            { type: 'ray', x1: -1, y1: -2, x2: -6, y2: -7, c1: false }, 
+            { type: 'segment', x1: -1, y1: 1, x2: 2, y2: 1, c1: true, c2: false }, 
+            { type: 'ray', x1: 2, y1: 2, x2: 6, y2: 6, c1: true } 
+        ], 
+        options: ["(−∞ , −۲) U {۱} U [۲ , ∞)", "[−۲ , ∞)", "(−∞ , ∞)", "(−۲ , ۲] U {۱}"], 
+        correct: 0 
+    },
+    { 
+        prompt: "دامنه تابع زیر (شامل تک نقطه) کدام است؟", 
+        branches: [ 
+            { type: 'segment', x1: -3, y1: 0, x2: -2, y2: 0, c1: true, c2: true }, 
+            { type: 'segment', x1: -1, y1: 2, x2: -1, y2: 2, c1: true, c2: true }, 
+            { type: 'segment', x1: 1, y1: -1, x2: 2, y2: 1, c1: true, c2: false } 
+        ], 
+        options: ["[−۳ , −۲] U {−۱} U [۱ , ۲)", "(−۳ , −۲) U {−۱} U (۱ , ۲]", "[−۳ , ۲)", "R"], 
+        correct: 0 
+    },
+    { 
+        prompt: "برد تابع خطی افقی زیر کدام است؟", 
+        branches: [ { type: 'segment', x1: -4, y1: 2, x2: 4, y2: 2, c1: false, c2: true } ], 
+        options: ["{۲}", "[−۴ , ۴)", "[۲ , ۴]", "R"], 
+        correct: 0 
+    },
+    { 
+        prompt: "دامنه تابع پرتویی زیر کدام است؟", 
+        branches: [ { type: 'ray', x1: 1, y1: -2, x2: 6, y2: 4, c1: false } ], 
+        options: ["(۱ , ∞)", "[۱ , ∞)", "(−∞ , ۱)", "(−∞ , ۱]"], 
+        correct: 0 
+    },
+    { 
+        prompt: "برد تابع چندضابطه‌ای زیر کدام است؟", 
+        branches: [ 
+            { type: 'segment', x1: -4, y1: -3, x2: -1, y2: 0, c1: true, c2: false }, 
+            { type: 'segment', x1: 1, y1: 2, x2: 4, y2: 2, c1: true, c2: false } 
+        ], 
+        options: ["[−۳ , ۰) U {۲}", "[−۳ , ۲]", "(−۳ , ۲)", "R"], 
+        correct: 0 
+    },
+    { 
+        prompt: "دامنه تابع چندضابطه‌ای زیر کدام است؟", 
+        branches: [ 
+            { type: 'ray', x1: -2, y1: 0, x2: -6, y2: 4, c1: true }, 
+            { type: 'segment', x1: -2, y1: 2, x2: 0, y2: 2, c1: false, c2: true }, 
+            { type: 'parabola', fn: function(x){ return (x-1)*(x-1); }, rangeX: [0, 3] } 
+        ], 
+        options: ["(−∞ , −۲] U (−۲ , ۰] U [۰ , ۳]", "(−∞ , −۲) U [−۲ , ۰] U (۰ , ۳]", "(−∞ , −۲] U (−۲ , ۳]", "R"], 
+        correct: 0 
+    }
+];
+
+var curQuizIdx = 0; var quizScore = 0; var quizAnswerGiven = false;
+
+window.initQuizSection = function() { curQuizIdx = 0; quizScore = 0; window.loadQuizQuestion(0); };
+
+window.loadQuizQuestion = function(idx) {
+    quizAnswerGiven = false; var q = quizQuestionsPool[idx];
+    document.getElementById('quizQuestionCount').textContent = 'سوال ' + toPersianDigits(idx + 1) + ' از ' + toPersianDigits(quizQuestionsPool.length);
+    document.getElementById('quizScoreCount').textContent = 'امتیاز: ' + toPersianDigits(quizScore);
+    document.getElementById('quizPrompt').textContent = q.prompt;
+    document.getElementById('quizSvg').innerHTML = buildBaseGraphContent(q.branches);
+
+    var container = document.getElementById('quizOptionsContainer');
+    container.innerHTML = '';
+    for (var i = 0; i < q.options.length; i++) {
+        var btn = document.createElement('button'); btn.type = 'button'; btn.className = 'quiz-option-btn';
+        btn.innerHTML = '<span class="val-span">' + q.options[i] + '</span>';
+        btn.onclick = (function(optIndex, optBtn){ return function() { window.handleQuizSelection(optIndex, optBtn); }; })(i, btn);
+        container.appendChild(btn);
+    }
+};
+
+window.handleQuizSelection = function(idx, btn) {
+    if (quizAnswerGiven) return;
+    quizAnswerGiven = true; var q = quizQuestionsPool[curQuizIdx]; var allBtns = document.querySelectorAll('.quiz-option-btn');
+    if (idx === q.correct) {
+        btn.className = 'quiz-option-btn opt-correct'; quizScore += 10; document.getElementById('quizScoreCount').textContent = 'امتیاز: ' + toPersianDigits(quizScore);
+    } else {
+        btn.className = 'quiz-option-btn opt-wrong';
+        if (allBtns[q.correct]) allBtns[q.correct].className = 'quiz-option-btn opt-correct';
+    }
+};
+
+window.proceedNextQuiz = function() {
+    if (!quizAnswerGiven) { alert('لطفاً ابتدا یکی از گزینه‌ها را انتخاب کنید!'); return; }
+    curQuizIdx++;
+    if (curQuizIdx < quizQuestionsPool.length) { window.loadQuizQuestion(curQuizIdx); } 
+    else { alert('🏁 آزمون به پایان رسید!\nامتیاز شما: ' + toPersianDigits(quizScore)); window.navTo('view-home'); }
+};
+</script>
+</body>
+</html>
